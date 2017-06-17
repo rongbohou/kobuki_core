@@ -103,11 +103,13 @@ public:
   /******************************************
   ** Packet Processing
   *******************************************/
+  // 驱动主循环，通过串口读取传感器数据／发送指令
   void spin();
+  
   void fixPayload(ecl::PushAndPop<unsigned char> & byteStream);
 
   /******************************************
-  ** Getters - Data Protection
+  ** Getters - Data Protection 接收器--数据保护
   *******************************************/
   void lockDataAccess();
   void unlockDataAccess();
@@ -118,6 +120,7 @@ public:
   /* Be sure to lock/unlock the data access (lockDataAccess and unlockDataAccess)
    * around any getXXX calls - see the doxygen notes for lockDataAccess. */
   ecl::Angle<double> getHeading() const;
+  // 获得IMU角速度
   double getAngularVelocity() const;
   VersionInfo versionInfo() const { return VersionInfo(firmware.data.version, hardware.data.version, unique_device_id.data.udid0, unique_device_id.data.udid1, unique_device_id.data.udid2); }
   Battery batteryStatus() const { return Battery(core_sensors.data.battery, core_sensors.data.charger); }
@@ -141,6 +144,7 @@ public:
   **********************/
   void getWheelJointStates(double &wheel_left_angle, double &wheel_left_angle_rate,
                            double &wheel_right_angle, double &wheel_right_angle_rate);
+  // 利用编码器数据计算机器人运动
   void updateOdometry(ecl::Pose2D<double> &pose_update,
                       ecl::linear_algebra::Vector3d &pose_update_rates);
 
@@ -152,6 +156,7 @@ public:
   /*********************
   ** Hard Commands
   **********************/
+  // 设置机器人线速度和角速度
   void setBaseControl(const double &linear_velocity, const double &angular_velocity);
   void setLed(const enum LedNumber &number, const enum LedColour &colour);
   void setDigitalOutput(const DigitalOutput &digital_output);
@@ -176,6 +181,7 @@ private:
   /*********************
   ** Odometry
   **********************/
+  // 差分驱动
   DiffDrive diff_drive;
   bool is_enabled;
 
@@ -198,8 +204,13 @@ private:
   /*********************
   ** Packet Handling
   **********************/
+  /*主要传感器数据，包括
+   * 左右编码器；
+   * 左右PWM
+   */
   CoreSensors core_sensors;
   Inertia inertia;
+  // 自动充电用
   DockIR dock_ir;
   Cliff cliff;
   Current current;
@@ -209,8 +220,8 @@ private:
   UniqueDeviceID unique_device_id; // requestable
   ThreeAxisGyro three_axis_gyro;
   ControllerInfo controller_info; // requestable
-
-  ecl::Serial serial;
+  //串口
+  ecl::Serial serial; 
   PacketFinder packet_finder;
   PacketFinder::BufferType data_buffer;
   bool is_alive; // used as a flag set by the data stream watchdog
@@ -221,7 +232,9 @@ private:
   /*********************
   ** Commands
   **********************/
+  // 通过串口发送控制指令，机器人运动 圆弧运动速度和半径
   void sendBaseControlCommand();
+  //通过串口发送指令
   void sendCommand(Command command);
   ecl::Mutex command_mutex; // protection against the user calling the command functions from multiple threads
   // data_mutex is protection against reading and writing data structures simultaneously as well as

@@ -38,6 +38,7 @@ class kobuki_PUBLIC DiffDrive {
 public:
   DiffDrive();
   const ecl::DifferentialDrive::Kinematics& kinematics() { return diff_drive_kinematics; }
+  // 利用编码器数据更新里程数据
   void update(const uint16_t &time_stamp,
               const uint16_t &left_encoder,
               const uint16_t &right_encoder,
@@ -46,7 +47,9 @@ public:
   void reset();
   void getWheelJointStates(double &wheel_left_angle, double &wheel_left_angle_rate,
                            double &wheel_right_angle, double &wheel_right_angle_rate);
+  // 设置机器人 角速度和线速度
   void setVelocityCommands(const double &vx, const double &wz);
+  // 将机器人角速度和线速度 转换为 圆弧运动 的速度和半径，用于最终的控制指令
   void velocityCommands(const double &vx, const double &wz);
   void velocityCommands(const short &cmd_speed, const short &cmd_radius);
   void velocityCommands(const std::vector<double> &cmd) { velocityCommands(cmd[0], cmd[1]); }

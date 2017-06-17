@@ -42,7 +42,7 @@ public:
   } data;
 
   virtual ~Inertia() {};
-
+ //发送
   bool serialise(ecl::PushAndPop<unsigned char> & byteStream)
   {
     buildBytes(Header::Inertia, byteStream);
@@ -54,7 +54,7 @@ public:
     buildBytes(data.acc[2], byteStream);
     return true;
   }
-
+ // 接收
   bool deserialise(ecl::PushAndPop<unsigned char> & byteStream)
   {
     if (byteStream.size() < length+2)

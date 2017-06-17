@@ -136,7 +136,7 @@ void Kobuki::init(Parameters &parameters) throw (ecl::StandardException)
   sendCommand(Command::GetControllerGain());
   //sig_controller_info.emit(); //emit default gain
 
-  thread.start(&Kobuki::spin, *this);
+  thread.start(&Kobuki::spin, *this);  // 在线程中进入循环
 }
 
 /*****************************************************************************
@@ -219,7 +219,7 @@ void Kobuki::spin()
     }
 
     /*********************
-     ** Read Incoming
+     ** Read Incoming 读取串口数据
      **********************/
     int n = serial.read((char*)buf, packet_finder.numberOfDataToRead());
     if (n == 0)
@@ -360,7 +360,8 @@ void Kobuki::spin()
       event_manager.update(is_connected, is_alive);
       last_signal_time.stamp();
       sig_stream_data.emit();
-      sendBaseControlCommand(); // send the command packet to mainboard;
+      //通过串口发送速度指令;
+      sendBaseControlCommand(); // send the command packet to mainboard
       if( version_info_reminder/*--*/ > 0 ) sendCommand(Command::GetVersionInfo());
       if( controller_info_reminder/*--*/ > 0 ) sendCommand(Command::GetControllerGain());
     }
@@ -525,7 +526,7 @@ void Kobuki::setBaseControl(const double &linear_velocity, const double &angular
 {
   diff_drive.setVelocityCommands(linear_velocity, angular_velocity);
 }
-
+// 通过串口发送速度指令，机器人运动 圆弧运动速度和半径
 void Kobuki::sendBaseControlCommand()
 {
   std::vector<double> velocity_commands_received;
@@ -548,11 +549,13 @@ void Kobuki::sendBaseControlCommand()
 
 /**
  * @brief Send the prepared command to the serial port.
- *
+ *通过串口发送指令
+ * 
  * Need to be a bit careful here, because we have no control over how the user
  * is calling this - they may be calling from different threads (this is so for
  * kobuki_node), so we mutex protect it here rather than relying on the user
  * to do so above.
+＊注意锁的使用
  *
  * @param command : prepared command template (see Command's static member functions).
  */

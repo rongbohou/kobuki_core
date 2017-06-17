@@ -40,7 +40,7 @@ DiffDrive::DiffDrive() :
 
 /**
  * @brief Updates the odometry from firmware stamps and encoders.
- *
+ *利用编码器数据更新里程数据
  * Really horrible - could do with an overhaul.
  *
  * @param time_stamp
@@ -84,7 +84,13 @@ void DiffDrive::update(const uint16_t &time_stamp,
   last_rad_right += tick_to_rad * right_diff_ticks;
 
   // TODO this line and the last statements are really ugly; refactor, put in another place
-  pose_update = diff_drive_kinematics.forward(tick_to_rad * left_diff_ticks, tick_to_rad * right_diff_ticks);
+  /* 利用左右两轮的转动角度计算位姿变化
+   * ds = radius*(dleft+dright)/2.0
+   *  domega = radius*(dright-dleft)/bias
+   * pose_update.translation(ds, 0)
+  *  pose_update.rotation(domega)
+   */
+  pose_update = diff_drive_kinematics.forward(tick_to_rad * left_diff_ticks, tick_to_rad * right_diff_ticks); 
 
   if (curr_timestamp != last_timestamp)
   {
@@ -120,7 +126,7 @@ void DiffDrive::getWheelJointStates(double &wheel_left_angle, double &wheel_left
   wheel_right_angle_rate = last_velocity_right;
   state_mutex.unlock();
 }
-
+// 设置机器人 角速度和线速度
 void DiffDrive::setVelocityCommands(const double &vx, const double &wz) {
   // vx: in m/s
   // wz: in rad/s
@@ -129,23 +135,24 @@ void DiffDrive::setVelocityCommands(const double &vx, const double &wz) {
   cmd_vel.push_back(wz);
   point_velocity = cmd_vel;
 }
-
+// 将机器人角速度和线速度 转换为 圆弧运动 的速度和半径，用于最终的控制指令
 void DiffDrive::velocityCommands(const double &vx, const double &wz) {
   // vx: in m/s
   // wz: in rad/s
   velocity_mutex.lock();
   const double epsilon = 0.0001;
 
-  // Special Case #1 : Straight Run
+  // Special Case #1 : Straight Run 直线运动
   if( std::abs(wz) < epsilon ) {
     radius = 0.0f;
     speed  = 1000.0f * vx;
     velocity_mutex.unlock();
     return;
   }
-
+  
+  //圆弧运动对应的半径
   radius = vx * 1000.0f / wz;
-  // Special Case #2 : Pure Rotation or Radius is less than or equal to 1.0 mm
+  // Special Case #2 : Pure Rotation or Radius is less than or equal to 1.0 mm 纯圆周运动 或者 radius <= 1mm
   if( std::abs(vx) < epsilon || std::abs(radius) <= 1.0f ) {
     speed  = 1000.0f * bias * wz / 2.0f;
     radius = 1.0f;
