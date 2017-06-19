@@ -28,7 +28,7 @@ bool CoreSensors::serialise(ecl::PushAndPop<unsigned char> & byteStream)
 {
   buildBytes(Header::CoreSensors, byteStream);
   buildBytes(length, byteStream);
-  buildBytes(data.time_stamp, byteStream);	//2
+  buildBytes(data.time_stamp, byteStream);	//2字节
   buildBytes(data.bumper, byteStream);		//1
   buildBytes(data.wheel_drop, byteStream);	//1
   buildBytes(data.cliff, byteStream);		//1
